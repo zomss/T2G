@@ -12,7 +12,6 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from env import env
 
 src_tokenizer = AutoTokenizer.from_pretrained(env.BERT_TOKENIZER)
-# src_tokenizer = KoBERTTokenizer.from_pretrained(env.BERT_TOKENIZER, sp_model_kwargs={'nbest_size': -1, 'alpha': 0.6, 'enable_sampling': True})
 
 def load_annotation(fpath):
     if env.LANGUAGE == 'ge':
@@ -29,7 +28,6 @@ def load_annotation(fpath):
         return _file
 
 def tokenize_BERT(txt_input):
-    # return src_tokenizer.batch_encode_plus(txt_input, return_tensors = 'pt', padding=True).to(env.DEVICE)
     return src_tokenizer(txt_input, return_tensors='pt', padding = True).to(env.DEVICE)
 
 def tokenize_Gl(txt_input):
@@ -59,7 +57,6 @@ def build_vocab():
     return vocab_g
 
 vocab_g = build_vocab()
-print(len(vocab_g))
 
 def make_tensor(txt_input):
     result = []
@@ -67,14 +64,12 @@ def make_tensor(txt_input):
         result.append(vocab_g[t])
     return torch.tensor(result)
 
-
 SRC_TRANSFORM = [tokenize_BERT]
 TGT_TRANSFORM = [tokenize_Gl, make_tensor, tensor_transform]
 
 def sequential_transforms(*transforms):
     def func(txt_input):
         for transform in transforms:
-            # print(txt_input)
             txt_input = transform(txt_input)
         return txt_input
     return func

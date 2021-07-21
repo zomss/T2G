@@ -91,15 +91,11 @@ def evaluate(model):
 
     bleu_score = [0,0,0,0]
     smoothie = SmoothingFunction().method5
-    for (src, tgt) in val_iter:
+    for (src, tgt) in tqdm(val_iter, desc = 'val time'):
         src_em = process.sequential_transforms(process.tokenize_BERT)([src])
         tgt_tokens = greedy_decode(model, src_em, 20)
         out = " ".join(process.vocab_g.lookup_tokens(list(tgt_tokens.cpu().numpy()))).replace("<bos>", "").replace("<eos>", "")
-        # print(out)
         bleu_score = [bleu_score[i] + sentence_bleu([tgt.split(" ")], out.split(" ")[1:-1], env.weight[i], smoothing_function=smoothie) for i in range(0,4)]
-        # if sentence_bleu([tgt.split(" ")], out.split(" ")[1:-1], env.weight[3], smoothing_function=smoothie) > 0:
-        #     print(out.split(" ")[1:-1])
-        #     print(tgt.split(" "))
     bleu_score = [v / len(val_iter) for v in bleu_score]
     return losses / len(dev_dataloader), bleu_score
 
@@ -115,6 +111,7 @@ def test_(model):
     else:
         exit()
     dev_dataloader = DataLoader(val_iter, batch_size = 16, collate_fn=process.collate_fn)
+
     for src, tgt in tqdm(dev_dataloader, desc='test_time'):
         tgt = tgt.to(env.DEVICE)
         tgt_input = tgt[:-1, :]
@@ -129,12 +126,10 @@ def test_(model):
     bleu_score = [0,0,0,0]
     smoothie = SmoothingFunction().method5
     for (src, tgt) in tqdm(val_iter, desc = 'test_time'):
-        # print(src)
         src_em = process.sequential_transforms(process.tokenize_BERT)(src)
         tgt_tokens = greedy_decode(model, src_em.to(env.DEVICE), 20)
         out = " ".join(process.vocab_g.lookup_tokens(list(tgt_tokens.cpu().numpy()))).replace("<bos>", "").replace("<eos>", "")
         bleu_score = [bleu_score[i] + sentence_bleu([tgt.split(" ")], out.split(" ")[1:-1], env.weight[i], smoothing_function=smoothie) for i in range(0,4)]
-        # break
     bleu_score = [v / len(val_iter) for v in bleu_score]
 
     return losses / len(dev_dataloader), bleu_score
